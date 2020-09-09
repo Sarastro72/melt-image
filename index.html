@@ -1,0 +1,177 @@
+<!--x = 0.299r + 0.587g + 0.114b-->
+<head>
+	<title>Image Melt</title>
+	<script type="text/javascript">
+let img = new Image();
+img.src = 'luna.jpg';
+img.onload = function() {
+  init(this);
+};
+
+let offset = 0
+let width = 0
+let height = 0
+let running = null
+
+function getColor(x, y, data) {
+  var red = y * (width * 4) + x * 4;
+  return [data[red], data[red + 1], data[red + 2], data[red + 3]];
+}
+
+function setColor(x, y, data, color) {
+  var red = y * (width * 4) + x * 4;
+  data[red] = color[0]
+  data[red + 1] = color[1]
+  data[red + 2] = color[2]
+  data[red + 3] = color[3]
+}
+
+
+function value(color) {
+  return 0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]
+}
+
+function hue(color) {
+  let max = color[0]
+  let min = color[0]
+  let order = [0, 0, 0]
+  if (color[1] > max) {
+    order[0] = 1
+    max = color[1]
+  } else {
+    order[2] = 1
+    min = color[1]
+  }
+  if (color[2] > max) {
+    order[1] = order[0]
+    order[0] = 2
+    max = color[2]
+  } else if (color[2] < min) {
+    order[1] = order[2]
+    order[2] = 2
+    min = color[2]
+  } else {
+    order[1] = 2
+  }
+
+  let r = 0
+  let o = order[0] * 10 + order[2]
+  //console.log(order)
+  switch(o) {
+    case 2: r = 0; break;
+    case 12: r = 1; break;
+    case 10: r = 2; break;
+    case 20: r = 3; break;
+    case 21: r = 4; break;
+    case 1: r = 5; break;
+  }
+  let sat = max - min
+  //console.log("sat " + sat)
+  if (sat == 0) {
+    return 0
+  }
+  let v = (color[order[1]] - min) * 255 / sat
+  //console.log("r " + r)
+  //console.log("v " + v)
+  //console.log((r * 255 + 255 - v) / 6)
+  if (r % 2 == 0) {
+    return Math.floor((r * 255 + v) / 6)
+  } else {
+    return Math.floor(((r * 255 + 255 - v) / 6) % 255)
+  } 
+}
+
+function sat(color) {
+  let max = color[0]
+  let min = color[0]
+  if (color[1] > max) {
+    max = color[1]
+  } else {
+    min = color[1]
+  }
+  if (color[2] > max) {
+    max = color[2]
+  } else if (color[2] < min) {
+    min = color[2]
+  }
+
+  return max - min
+}
+
+function xval(color) {
+  return sat(color)
+}
+
+function yval(color) {
+  return -hue(color)
+}
+
+function init(img) {
+  let canvas = document.getElementById('canvas');
+  let ctx = canvas.getContext('2d');
+  width = img.width
+  height = img.height
+  ctx.canvas.width = width
+  ctx.canvas.height = height
+  ctx.drawImage(img, 0, 0);
+  img.style.display = 'none';
+  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let data = imageData.data;
+    
+  let step = function() {
+    let switched = 0;
+    let yoff = offset % 2
+    for (let y = yoff; y < height-1; y += 2) {
+      for (let x = 0; x < width; x += 1) {
+        let color1 = getColor(x, y, data)
+        let color2 = getColor(x, y + 1, data)
+        if (yval(color1) > yval(color2)) {
+          setColor(x, y, data, color2)
+          setColor(x, y + 1, data, color1)
+          switched++
+        }
+      }
+    }
+    let xoff = Math.floor(offset / 2) % 2
+    for (let y = 0; y < height; y += 1) {
+      for (let x = xoff; x < width-1; x += 2) {
+        let color1 = getColor(x, y, data)
+        let color2 = getColor(x + 1, y, data)
+        if (xval(color1) > xval(color2)) {
+          setColor(x, y, data, color2)
+          setColor(x + 1, y, data, color1)
+          switched++
+        }
+      }
+    }
+    offset = (offset + 1) % 4
+    ctx.putImageData(imageData, 0, 0);
+    console.log("("+xoff+", "+yoff+") Switched " + switched)
+    if (switched == 0) {
+      toggleRun()
+    }
+  }
+
+  let toggleRun = function() {
+    if (running) {
+      clearInterval(running)
+      running = null
+    } else {
+      running = setInterval(step, 10)
+    }
+  }
+
+  let stepbtn = document.getElementById('stepbtn');
+  stepbtn.addEventListener('click', step);
+  let runbtn = document.getElementById('runbtn');
+  runbtn.addEventListener('click', toggleRun);
+}
+	</script>
+</head>
+<body>
+	<canvas id="canvas"></canvas>
+
+  <input id="stepbtn" value="Step" type="button">
+  <input id="runbtn" value="Run" type="button">
+
+</body>
