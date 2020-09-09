@@ -3,15 +3,20 @@
 	<title>Image Melt</title>
 	<script type="text/javascript">
 let img = new Image();
-img.src = 'luna.jpg';
+const params = new URLSearchParams(window.location.search)
+img.src = params.get("i");
 img.onload = function() {
   init(this);
 };
+
+const xparam = [0, 1, 1]
+const yparam = [-1, 0, 0]
 
 let offset = 0
 let width = 0
 let height = 0
 let running = null
+let inactive = 0;
 
 function getColor(x, y, data) {
   var red = y * (width * 4) + x * 4;
@@ -99,11 +104,25 @@ function sat(color) {
 }
 
 function xval(color) {
-  return sat(color)
+  return cVal(xparam[0], xparam[1], xparam[2], color)
 }
 
 function yval(color) {
-  return -hue(color)
+  return cVal(yparam[0], yparam[1], yparam[2], color)
+}
+
+function cVal(h, s, v, color) {
+  val = 0; 
+  if (h != 0) {
+    val += hue(color) * h
+  }
+  if (s != 0) {
+    val += sat(color) * s
+  }
+    if (v != 0) {
+    val += value(color) * v
+  }
+  return val / Math.abs(h + s + v)
 }
 
 function init(img) {
@@ -117,8 +136,8 @@ function init(img) {
   img.style.display = 'none';
   let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   let data = imageData.data;
-    
-  let step = function() {
+
+  let x_then_y = function() {
     let switched = 0;
     let yoff = offset % 2
     for (let y = yoff; y < height-1; y += 2) {
@@ -148,15 +167,24 @@ function init(img) {
     ctx.putImageData(imageData, 0, 0);
     console.log("("+xoff+", "+yoff+") Switched " + switched)
     if (switched == 0) {
+      inactive++
+    } else {
+      inactive = 0;
+    }
+    if (inactive >= 4) {
       toggleRun()
     }
   }
 
+  let step = x_then_y
+
   let toggleRun = function() {
     if (running) {
+      console.log("Toggle running OFF")
       clearInterval(running)
       running = null
     } else {
+      console.log("Toggle running ON")
       running = setInterval(step, 10)
     }
   }
