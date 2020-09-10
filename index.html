@@ -3,6 +3,7 @@
 	<title>Image Melt</title>
 	<script type="text/javascript">
 let img = new Image();
+img.crossOrigin = "Anonymous";
 const params = new URLSearchParams(window.location.search)
 img.src = params.get("i");
 img.onload = function() {
