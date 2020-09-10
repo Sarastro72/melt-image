@@ -9,14 +9,25 @@ img.onload = function() {
   init(this);
 };
 
-const xparam = [0, 1, 1]
-const yparam = [-1, 0, 0]
-
 let offset = 0
 let width = 0
 let height = 0
 let running = null
-let inactive = 0;
+let inactive = 0
+
+let xparam = [0, 0, 0]
+let yparam = [0, 0, 0]
+
+function readParams() {
+  xparam = [
+      parseFloat(document.getElementById("xh").value),
+      parseFloat(document.getElementById("xs").value),
+      parseFloat(document.getElementById("xv").value)]
+  yparam = [
+      parseFloat(document.getElementById("yh").value),
+      parseFloat(document.getElementById("ys").value),
+      parseFloat(document.getElementById("yv").value)]
+}
 
 function getColor(x, y, data) {
   var red = y * (width * 4) + x * 4;
@@ -126,7 +137,9 @@ function cVal(h, s, v, color) {
 }
 
 function init(img) {
+  console.log("Init image")
   let canvas = document.getElementById('canvas');
+  let output = document.getElementById('output');
   let ctx = canvas.getContext('2d');
   width = img.width
   height = img.height
@@ -165,7 +178,7 @@ function init(img) {
     }
     offset = (offset + 1) % 4
     ctx.putImageData(imageData, 0, 0);
-    console.log("("+xoff+", "+yoff+") Switched " + switched)
+    if (switched % 7 == 0) output.innerText="" + switched
     if (switched == 0) {
       inactive++
     } else {
@@ -185,9 +198,12 @@ function init(img) {
       running = null
     } else {
       console.log("Toggle running ON")
+      readParams()
       running = setInterval(step, 10)
     }
   }
+
+
 
   let stepbtn = document.getElementById('stepbtn');
   stepbtn.addEventListener('click', step);
@@ -197,9 +213,20 @@ function init(img) {
 	</script>
 </head>
 <body>
-	<canvas id="canvas"></canvas>
-
-  <input id="stepbtn" value="Step" type="button">
-  <input id="runbtn" value="Run" type="button">
-
+  <div id="image">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div id="params">
+    X <input type="text" value="1" id="xh">
+    <input type="text" value="0" id="xs">
+    <input type="text" value="0" id="xv"><br>
+    Y <input type="text" value="0" id="yh">
+    <input type="text" value="1" id="ys">
+    <input type="text" value="0" id="yv">
+  </div>
+  <div id="buttons">
+    <input id="stepbtn" value="Step" type="button">
+    <input id="runbtn" value="Run" type="button">
+    <div id="output"></div>
+  </div>
 </body>
