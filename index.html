@@ -41,6 +41,9 @@ function normaliseParams(p) {
   let min = Math.min(...p)
   let max = Math.max(...p)
   let scale = max-min
+  if (scale == 0) {
+    scale = 1
+  }
   return [
     p[0] / scale / 6, // hue is special
     p[1] / scale,
@@ -49,8 +52,8 @@ function normaliseParams(p) {
 }
 
 function getColor(x, y, data) {
-  var red = y * (width * 4) + x * 4;
-  return [data[red], data[red + 1], data[red + 2], data[red + 3]];
+  var red = (y * width + x) * 4;
+  return [data[red], data[red + 1], data[red + 2]];
 }
 
 function setColor(x, y, data, color) {
@@ -58,7 +61,6 @@ function setColor(x, y, data, color) {
   data[red] = color[0]
   data[red + 1] = color[1]
   data[red + 2] = color[2]
-  //data[red + 3] = color[3]
 }
 
 
@@ -222,7 +224,6 @@ function toggleRun() {
 
 
 window.onload = function() {
-  console.log("DOCUMET LOADED YAY")
   let stepbtn = document.getElementById('stepbtn');
   stepbtn.addEventListener('click', step);
   let runbtn = document.getElementById('runbtn');
