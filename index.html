@@ -1,5 +1,6 @@
 <!--x = 0.299r + 0.587g + 0.114b-->
 <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<title>Image Melt</title>
 	<script type="text/javascript">
 let img = new Image();
@@ -15,6 +16,12 @@ let width = 0
 let height = 0
 let running = false
 let inactive = 0
+
+let output = null
+let canvas = null
+let ctx = null
+let imageData = null
+let data = null
 
 let xparam = [0, 0, 0]
 let yparam = [0, 0, 0]
@@ -150,76 +157,79 @@ function parametrizedValue(h, s, v, color) {
 
 function init(img) {
   console.log("Init image")
-  let canvas = document.getElementById('canvas');
-  let output = document.getElementById('output');
-  let ctx = canvas.getContext('2d');
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext('2d');
   width = img.width
   height = img.height
   ctx.canvas.width = width
   ctx.canvas.height = height
   ctx.drawImage(img, 0, 0);
   img.style.display = 'none';
-  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  let data = imageData.data;
+  imageData = ctx.getImageData(0, 0, width, height);
+  data = imageData.data;
+}
 
-  let x_then_y = function() {
-    let switched = 0;
-    for (let y = offset; y < height-1; y += 2) {
-      for (let x = 0; x < width; x += 1) {
-        let color1 = getColor(x, y, data)
-        let color2 = getColor(x, y + 1, data)
-        if (yval(color1) > yval(color2)) {
-          setColor(x, y, data, color2)
-          setColor(x, y + 1, data, color1)
-          switched++
-        }
+function x_then_y() {
+  let switched = 0;
+  for (let y = offset; y < height-1; y += 2) {
+    for (let x = 0; x < width; x += 1) {
+      let color1 = getColor(x, y, data)
+      let color2 = getColor(x, y + 1, data)
+      if (yval(color1) > yval(color2)) {
+        setColor(x, y, data, color2)
+        setColor(x, y + 1, data, color1)
+        switched++
       }
     }
-    for (let y = 0; y < height; y += 1) {
-      for (let x = offset; x < width-1; x += 2) {
-        let color1 = getColor(x, y, data)
-        let color2 = getColor(x + 1, y, data)
-        if (xval(color1) > xval(color2)) {
-          setColor(x, y, data, color2)
-          setColor(x + 1, y, data, color1)
-          switched++
-        }
+  }
+  for (let y = 0; y < height; y += 1) {
+    for (let x = offset; x < width-1; x += 2) {
+      let color1 = getColor(x, y, data)
+      let color2 = getColor(x + 1, y, data)
+      if (xval(color1) > xval(color2)) {
+        setColor(x, y, data, color2)
+        setColor(x + 1, y, data, color1)
+        switched++
       }
     }
-    offset = (offset + 1) % 2
-    ctx.putImageData(imageData, 0, 0);
-    if (switched % 7 == 0) output.innerText="" + switched
-    if (switched == 0) {
-      inactive++
-    } else {
-      inactive = 0;
-    }
-    if (inactive >= 4) {
-      toggleRun()
-    }
   }
-
-  let step = x_then_y
-
-  let toggleRun = function() {
-    if (running) {
-      console.log("Toggle running OFF")
-      clearInterval(running)
-      running = null
-    } else {
-      console.log("Toggle running ON")
-      readParams()
-      running = setInterval(step, 10)
-    }
+  offset = (offset + 1) % 2
+  ctx.putImageData(imageData, 0, 0);
+  if (switched % 7 == 0) output.innerText="" + switched
+  if (switched == 0) {
+    inactive++
+  } else {
+    inactive = 0;
   }
+  if (inactive >= 4) {
+    toggleRun()
+  }
+}
+
+let step = x_then_y
+
+function toggleRun() {
+  if (running) {
+    console.log("Toggle running OFF")
+    clearInterval(running)
+    running = null
+  } else {
+    console.log("Toggle running ON")
+    readParams()
+    running = setInterval(step, 10)
+  }
+}
 
 
-
+window.onload = function() {
+  console.log("DOCUMET LOADED YAY")
   let stepbtn = document.getElementById('stepbtn');
   stepbtn.addEventListener('click', step);
   let runbtn = document.getElementById('runbtn');
   runbtn.addEventListener('click', toggleRun);
+  output = document.getElementById('output');
 }
+
 	</script>
 </head>
 <body>
