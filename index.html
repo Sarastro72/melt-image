@@ -40,16 +40,14 @@ function readParams() {
 }
 
 function normaliseParams(p) {
-  let min = Math.min(...p)
-  let max = Math.max(...p)
-  let scale = max-min
-  if (scale == 0) {
-    scale = 1
+  let max = Math.abs(p[0]) + Math.abs(p[1]) + Math.abs(p[2])
+  if (max == 0) {
+    max = 1
   }
   return [
-    p[0] / scale / 6, // hue is special
-    p[1] / scale,
-    p[2] / scale,
+    p[0] / max,
+    p[1] / max,
+    p[2] / max,
   ]
 }
 
@@ -101,7 +99,7 @@ function switchWeight(x1, y1, x2, y2) {
 }
 
 function value(color) {
-  return 0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]
+  return Math.floor(0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]) - 128
 }
 
 function hue(color) {
@@ -143,9 +141,9 @@ function hue(color) {
   }
   let v = (color[order[1]] - min) * 255 / sat
   if (r % 2 == 0) {
-    return Math.floor(r * 255 + v)
+    return Math.floor((r * 255 + v) / 6) - 128
   } else {
-    return Math.floor(r * 255 + 255 - v)
+    return Math.floor((r * 255 + 255 - v) / 6) - 128
   } 
 }
 
@@ -163,7 +161,7 @@ function sat(color) {
     min = color[2]
   }
 
-  return max - min
+  return max - min - 128
 }
 
 function xval(color) {
