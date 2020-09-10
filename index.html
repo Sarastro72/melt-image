@@ -12,21 +12,32 @@ img.onload = function() {
 let offset = 0
 let width = 0
 let height = 0
-let running = null
+let running = false
 let inactive = 0
 
 let xparam = [0, 0, 0]
 let yparam = [0, 0, 0]
 
 function readParams() {
-  xparam = [
+  xparam = normaliseParams([
       parseFloat(document.getElementById("xh").value),
       parseFloat(document.getElementById("xs").value),
-      parseFloat(document.getElementById("xv").value)]
-  yparam = [
+      parseFloat(document.getElementById("xv").value)])
+  yparam = normaliseParams([
       parseFloat(document.getElementById("yh").value),
       parseFloat(document.getElementById("ys").value),
-      parseFloat(document.getElementById("yv").value)]
+      parseFloat(document.getElementById("yv").value)])
+}
+
+function normaliseParams(p) {
+  let min = Math.min(...p)
+  let max = Math.max(...p)
+  let scale = max-min
+  return [
+    p[0] / scale / 6, // hue is special
+    p[1] / scale,
+    p[2] / scale,
+  ]
 }
 
 function getColor(x, y, data) {
@@ -39,7 +50,7 @@ function setColor(x, y, data, color) {
   data[red] = color[0]
   data[red + 1] = color[1]
   data[red + 2] = color[2]
-  data[red + 3] = color[3]
+  //data[red + 3] = color[3]
 }
 
 
@@ -91,9 +102,9 @@ function hue(color) {
   //console.log("v " + v)
   //console.log((r * 255 + 255 - v) / 6)
   if (r % 2 == 0) {
-    return Math.floor((r * 255 + v) / 6)
+    return Math.floor(r * 255 + v)
   } else {
-    return Math.floor(((r * 255 + 255 - v) / 6) % 255)
+    return Math.floor(r * 255 + 255 - v)
   } 
 }
 
@@ -115,14 +126,14 @@ function sat(color) {
 }
 
 function xval(color) {
-  return cVal(xparam[0], xparam[1], xparam[2], color)
+  return parametrizedValue(xparam[0], xparam[1], xparam[2], color)
 }
 
 function yval(color) {
-  return cVal(yparam[0], yparam[1], yparam[2], color)
+  return parametrizedValue(yparam[0], yparam[1], yparam[2], color)
 }
 
-function cVal(h, s, v, color) {
+function parametrizedValue(h, s, v, color) {
   val = 0; 
   if (h != 0) {
     val += hue(color) * h
