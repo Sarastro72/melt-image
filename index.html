@@ -22,6 +22,7 @@ let canvas = null
 let ctx = null
 let imageData = null
 let data = null
+let weights = null
 
 let xparam = [0, 0, 0]
 let yparam = [0, 0, 0]
@@ -35,35 +36,70 @@ function readParams() {
       parseFloat(document.getElementById("yh").value),
       parseFloat(document.getElementById("ys").value),
       parseFloat(document.getElementById("yv").value)])
+  calculateWeights()
 }
 
 function normaliseParams(p) {
-  let min = Math.min(...p)
-  let max = Math.max(...p)
-  let scale = max-min
+  let max = Math.abs(p[0]) + Math.abs(p[1]) + Math.abs(p[2])
+  if (max == 0) {
+    max = 1
+  }
   return [
-    p[0] / scale / 6, // hue is special
-    p[1] / scale,
-    p[2] / scale,
+    p[0] / max,
+    p[1] / max,
+    p[2] / max,
   ]
 }
 
-function getColor(x, y, data) {
-  var red = y * (width * 4) + x * 4;
-  return [data[red], data[red + 1], data[red + 2], data[red + 3]];
+function calculateWeights() {
+  console.log("calculateWeights")
+  weights = []
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      let color = getColor(x, y)
+      let weight = [xval(color), yval(color)]
+      weights.push(weight)
+    }
+  }
 }
 
-function setColor(x, y, data, color) {
-  var red = y * (width * 4) + x * 4;
-  data[red] = color[0]
-  data[red + 1] = color[1]
-  data[red + 2] = color[2]
-  //data[red + 3] = color[3]
+function getColor(x, y) {
+  let red = (y * width + x) * 4;
+  return [data[red], data[red + 1], data[red + 2]];
 }
 
+function switchColor(x1, y1, x2, y2) {
+  let red1 = y1 * (width * 4) + x1 * 4;
+  let red2 = y2 * (width * 4) + x2 * 4;
+  let r = data[red1]
+  let g = data[red1 + 1]
+  let b = data[red1 + 2]
+  data[red1] = data[red2]
+  data[red1 + 1] = data[red2 + 1]
+  data[red1 + 2] = data[red2 + 2]
+  data[red2] = r
+  data[red2 + 1] = g
+  data[red2 + 2] = b   
+}
+
+function getWeightX(x, y) {
+  return weights[y * width + x][0];
+}
+
+function getWeightY(x, y) {
+  return weights[y * width + x][1];
+}
+
+function switchWeight(x1, y1, x2, y2) {
+  let p1 = y1 * width + x1
+  let p2 = y2 * width + x2
+  let w = weights[p1]
+  weights[p1] = weights[p2]
+  weights[p2] = w
+}
 
 function value(color) {
-  return 0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]
+  return Math.floor(0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]) - 128
 }
 
 function hue(color) {
@@ -91,7 +127,6 @@ function hue(color) {
 
   let r = 0
   let o = order[0] * 10 + order[2]
-  //console.log(order)
   switch(o) {
     case 2: r = 0; break;
     case 12: r = 1; break;
@@ -101,18 +136,14 @@ function hue(color) {
     case 1: r = 5; break;
   }
   let sat = max - min
-  //console.log("sat " + sat)
   if (sat == 0) {
     return 0
   }
   let v = (color[order[1]] - min) * 255 / sat
-  //console.log("r " + r)
-  //console.log("v " + v)
-  //console.log((r * 255 + 255 - v) / 6)
   if (r % 2 == 0) {
-    return Math.floor(r * 255 + v)
+    return Math.floor((r * 255 + v) / 6) - 128
   } else {
-    return Math.floor(r * 255 + 255 - v)
+    return Math.floor((r * 255 + 255 - v) / 6) - 128
   } 
 }
 
@@ -130,7 +161,7 @@ function sat(color) {
     min = color[2]
   }
 
-  return max - min
+  return max - min - 128
 }
 
 function xval(color) {
@@ -169,50 +200,56 @@ function init(img) {
   data = imageData.data;
 }
 
-function x_then_y() {
+function switch_y_then_x() {
   let switched = 0;
   for (let y = offset; y < height-1; y += 2) {
     for (let x = 0; x < width; x += 1) {
-      let color1 = getColor(x, y, data)
-      let color2 = getColor(x, y + 1, data)
-      if (yval(color1) > yval(color2)) {
-        setColor(x, y, data, color2)
-        setColor(x, y + 1, data, color1)
+      if (getWeightY(x, y) > getWeightY(x, y + 1)) {
+        switchColor(x, y, x, y + 1)
+        switchWeight(x, y, x, y + 1)
         switched++
       }
     }
   }
   for (let y = 0; y < height; y += 1) {
     for (let x = offset; x < width-1; x += 2) {
-      let color1 = getColor(x, y, data)
-      let color2 = getColor(x + 1, y, data)
-      if (xval(color1) > xval(color2)) {
-        setColor(x, y, data, color2)
-        setColor(x + 1, y, data, color1)
+      if (getWeightX(x, y) > getWeightX(x + 1, y)) {
+        switchColor(x, y, x + 1, y)
+        switchWeight(x, y, x + 1, y)
         switched++
       }
     }
   }
   offset = (offset + 1) % 2
   ctx.putImageData(imageData, 0, 0);
-  if (switched % 7 == 0) output.innerText="" + switched
+  if (switched % 7 == 0 || switched < 100) output.innerText="" + switched
   if (switched == 0) {
     inactive++
   } else {
     inactive = 0;
   }
-  if (inactive >= 4) {
+  if (inactive >= 2) {
     toggleRun()
   }
 }
 
-let step = x_then_y
+let step = switch_y_then_x
+
+function doStep() {
+  if (running) {
+    clearInterval(running)
+    running = null    
+  }
+  readParams()
+  step()
+}
 
 function toggleRun() {
   if (running) {
     console.log("Toggle running OFF")
     clearInterval(running)
     running = null
+    output.innerText = "Stopped"
   } else {
     console.log("Toggle running ON")
     readParams()
@@ -222,9 +259,8 @@ function toggleRun() {
 
 
 window.onload = function() {
-  console.log("DOCUMET LOADED YAY")
   let stepbtn = document.getElementById('stepbtn');
-  stepbtn.addEventListener('click', step);
+  stepbtn.addEventListener('click', doStep);
   let runbtn = document.getElementById('runbtn');
   runbtn.addEventListener('click', toggleRun);
   output = document.getElementById('output');
