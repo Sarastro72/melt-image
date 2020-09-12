@@ -272,14 +272,26 @@ window.onload = function() {
   <div id="image">
     <canvas id="canvas"></canvas>
   </div>
-  <div id="params">
-    X <input type="text" value="1" id="xh">
-    <input type="text" value="0" id="xs">
-    <input type="text" value="0" id="xv"><br>
-    Y <input type="text" value="0" id="yh">
-    <input type="text" value="1" id="ys">
-    <input type="text" value="0" id="yv">
-  </div>
+  <table id="panel">
+    <tr>
+      <td> </td>
+      <td>Hue</td>
+      <td>Sat</td>
+      <td>Val</td>
+    </tr>
+    <tr>
+      <td>X</td>
+      <td><input type="text" value="0" id="xh"></td>
+      <td><input type="text" value="0" id="xs"></td>
+      <td><input type="text" value="0" id="xv"></td>
+    </tr>
+    <tr>
+      <td>Y</td>
+      <td><input type="text" value="0" id="yh"></td>
+      <td><input type="text" value="1" id="ys"></td>
+      <td><input type="text" value="0" id="yv"></td>
+    </tr>
+  </table>
   <div id="buttons">
     <input id="stepbtn" value="Step" type="button">
     <input id="runbtn" value="Run" type="button">
