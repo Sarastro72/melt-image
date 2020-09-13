@@ -3,13 +3,13 @@
    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<title>Image Melt</title>
 	<script type="text/javascript">
-let img = new Image();
-img.crossOrigin = "Anonymous";
+let img = new Image()
+img.crossOrigin = "Anonymous"
 const params = new URLSearchParams(window.location.search)
-img.src = params.get("i");
+img.src = params.get("i")
 img.onload = function() {
-  init(this);
-};
+  init(this)
+}
 
 let offset = 0
 let width = 0
@@ -26,17 +26,34 @@ let weights = null
 
 let xparam = [0, 0, 0]
 let yparam = [0, 0, 0]
+let stepMethod = switch_y_then_x
 
 function readParams() {
   xparam = normaliseParams([
       parseFloat(document.getElementById("xh").value),
       parseFloat(document.getElementById("xs").value),
-      parseFloat(document.getElementById("xv").value)])
+      parseFloat(document.getElementById("xv").value),
+      parseFloat(document.getElementById("xhs").value)])
   yparam = normaliseParams([
       parseFloat(document.getElementById("yh").value),
       parseFloat(document.getElementById("ys").value),
-      parseFloat(document.getElementById("yv").value)])
+      parseFloat(document.getElementById("yv").value),
+      parseFloat(document.getElementById("yhs").value)])
   calculateWeights()
+  switch (parseInt(document.getElementById("method").value)) {
+    case 0:
+    console.log("Using switch_y_then_x")
+      stepMethod = switch_y_then_x
+      break
+    case 1:
+    console.log("Using scattered_bubble_sort")
+      stepMethod = scattered_bubble_sort
+      break
+    case 2:
+    console.log("Using optimise_two_by_two_square")
+      stepMethod = optimise_two_by_two_square
+      break
+  }
 }
 
 function normaliseParams(p) {
@@ -48,6 +65,7 @@ function normaliseParams(p) {
     p[0] / max,
     p[1] / max,
     p[2] / max,
+    p[3]
   ]
 }
 
@@ -64,13 +82,13 @@ function calculateWeights() {
 }
 
 function getColor(x, y) {
-  let red = (y * width + x) * 4;
-  return [data[red], data[red + 1], data[red + 2]];
+  let red = (y * width + x) * 4
+  return [data[red], data[red + 1], data[red + 2]]
 }
 
 function switchColor(x1, y1, x2, y2) {
-  let red1 = y1 * (width * 4) + x1 * 4;
-  let red2 = y2 * (width * 4) + x2 * 4;
+  let red1 = y1 * (width * 4) + x1 * 4
+  let red2 = y2 * (width * 4) + x2 * 4
   let r = data[red1]
   let g = data[red1 + 1]
   let b = data[red1 + 2]
@@ -82,12 +100,19 @@ function switchColor(x1, y1, x2, y2) {
   data[red2 + 2] = b   
 }
 
+function setColor(x, y, color) {
+  let red = y * (width * 4) + x * 4
+  data[red] = color[0]
+  data[red + 1] = color[1]
+  data[red + 2] = color[2]
+}
+
 function getWeightX(x, y) {
-  return weights[y * width + x][0];
+  return weights[y * width + x][0]
 }
 
 function getWeightY(x, y) {
-  return weights[y * width + x][1];
+  return weights[y * width + x][1]
 }
 
 function switchWeight(x1, y1, x2, y2) {
@@ -102,7 +127,7 @@ function value(color) {
   return Math.floor(0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]) - 128
 }
 
-function hue(color) {
+function hue(color, start) {
   let max = color[0]
   let min = color[0]
   let order = [0, 0, 0]
@@ -141,10 +166,10 @@ function hue(color) {
   }
   let v = (color[order[1]] - min) * 255 / sat
   if (r % 2 == 0) {
-    return Math.floor((r * 255 + v) / 6) - 128
+    return (Math.floor(((r + start) * 255 + v + 64) / 6) % 256) - 128
   } else {
-    return Math.floor((r * 255 + 255 - v) / 6) - 128
-  } 
+    return (Math.floor(((r + start) * 255 + 255 - v + 64) / 6) % 256) - 128
+  }
 }
 
 function sat(color) {
@@ -165,17 +190,17 @@ function sat(color) {
 }
 
 function xval(color) {
-  return parametrizedValue(xparam[0], xparam[1], xparam[2], color)
+  return parametrizedValue(xparam[0], xparam[1], xparam[2], xparam[3], color)
 }
 
 function yval(color) {
-  return parametrizedValue(yparam[0], yparam[1], yparam[2], color)
+  return parametrizedValue(yparam[0], yparam[1], yparam[2], yparam[3], color)
 }
 
-function parametrizedValue(h, s, v, color) {
-  val = 0; 
+function parametrizedValue(h, s, v, hs, color) {
+  val = 0 
   if (h != 0) {
-    val += hue(color) * h
+    val += hue(color, hs) * h
   }
   if (s != 0) {
     val += sat(color) * s
@@ -188,20 +213,20 @@ function parametrizedValue(h, s, v, color) {
 
 function init(img) {
   console.log("Init image")
-  canvas = document.getElementById('canvas');
-  ctx = canvas.getContext('2d');
+  canvas = document.getElementById('canvas')
+  ctx = canvas.getContext('2d')
   width = img.width
   height = img.height
   ctx.canvas.width = width
   ctx.canvas.height = height
-  ctx.drawImage(img, 0, 0);
-  img.style.display = 'none';
-  imageData = ctx.getImageData(0, 0, width, height);
-  data = imageData.data;
+  ctx.drawImage(img, 0, 0)
+  img.style.display = 'none'
+  imageData = ctx.getImageData(0, 0, width, height)
+  data = imageData.data
 }
 
 function switch_y_then_x() {
-  let switched = 0;
+  let switched = 0
   for (let y = offset; y < height-1; y += 2) {
     for (let x = 0; x < width; x += 1) {
       if (getWeightY(x, y) > getWeightY(x, y + 1)) {
@@ -221,19 +246,164 @@ function switch_y_then_x() {
     }
   }
   offset = (offset + 1) % 2
-  ctx.putImageData(imageData, 0, 0);
-  if (switched % 7 == 0 || switched < 100) output.innerText="" + switched
+  ctx.putImageData(imageData, 0, 0)
   if (switched == 0) {
     inactive++
   } else {
-    inactive = 0;
+    inactive = 0
   }
   if (inactive >= 2) {
     toggleRun()
   }
+  return switched
 }
 
-let step = switch_y_then_x
+
+const primes = [42157, 61403, 85199, 22807, 95483, 5147, 39619]
+function scattered_bubble_sort() {
+  let n_primes = primes.length
+  let division = 2
+  let prime = primes[offset % n_primes]
+  let seg = offset % division
+  //console.log(`offset: ${offset}, prime: ${offset % n_primes}, segment= ${seg}`)
+  offset = (offset + 1) % (n_primes * division)
+  let switched = 0
+  let inactive = 0
+  let cw = width - 1
+  let ch = height -1
+  let space = cw * ch
+  let start = Math.round(space * seg / division)
+  let end = Math.round(space * (seg + 1) / division)
+  //console.log(`${start} -> ${end}`)
+  p = (start * prime) % space
+
+  for (let i = start; i < end; i++) {
+    let x = p % cw
+    let y = Math.floor(p / cw)
+    if (getWeightY(x, y) > getWeightY(x, y + 1)) {
+      switchColor(x, y, x, y + 1)
+      switchWeight(x, y, x, y + 1)
+      switched++
+    }
+    if (getWeightX(x, y) > getWeightX(x + 1, y)) {
+      switchColor(x, y, x + 1, y)
+      switchWeight(x, y, x + 1, y)
+      switched++
+    }
+    p += prime
+    while (p >= space) {
+      p -= space
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+  if (switched == 0) {
+    inactive++
+  } else {
+    inactive = 0
+  }
+  if (inactive >= n_primes * division) {
+    toggleRun()
+  }
+  return switched
+}
+
+function optimise_two_by_two_square() {
+  offset = (offset + 1) % 2
+  let switched = 0
+  let inactive = 0
+
+  for (let y = offset; y < height-1; y += 2) {
+    for (let x = offset; x < width-1; x += 2) {
+      let max = 0
+      let c = 0
+      
+      let v = getWeightX(x, y) - getWeightX(x + 1, y)
+      if (v > max) {
+        max = v
+        c = 1
+      }
+      v += getWeightX(x, y + 1) - getWeightX(x + 1, y + 1) 
+      if (v > max) {
+        max = v
+        c = 2
+      }
+
+      v = (getWeightX(x, y) - getWeightX(x + 1, y + 1)) + (getWeightY(x, y) - getWeightY(x + 1, y + 1))
+      if (v > max) {
+        max = v
+        c = 3
+      }
+      v =+ (getWeightX(x, y + 1) - getWeightX(x + 1, y)) + (getWeightY(x + 1, y) - getWeightY(x, y + 1))
+      if (v > max) {
+        max = v
+        c = 4
+      }
+
+      v = getWeightY(x, y) - getWeightY(x , y + 1)
+      if (v > max) {
+        max = v
+        c = 5
+      }
+      v += getWeightY(x + 1, y) - getWeightY(x + 1, y + 1) 
+      if (v > max) {
+        max = v
+        c = 6
+      }
+
+      switch(c) {
+        case 1: 
+          switchColor(x, y, x + 1, y)
+          switchWeight(x, y, x + 1, y)
+          switched += 1
+          break
+        case 2:
+          switchColor(x, y, x + 1, y)
+          switchWeight(x, y, x + 1, y)
+          switchColor(x, y + 1, x + 1, y + 1)
+          switchWeight(x, y + 1, x + 1, y + 1)
+          switched += 2
+          break
+        case 3:
+          switchColor(x, y, x + 1, y + 1)
+          switchWeight(x, y, x + 1, y + 1)
+          switched += 1
+          break
+        case 4:
+          switchColor(x, y, x + 1, y + 1)
+          switchWeight(x, y, x + 1, y + 1)
+          switchColor(x + 1, y, x, y + 1)
+          switchWeight(x + 1, y, x, y + 1)
+          switched += 2
+          break
+        case 5:
+          switchColor(x, y, x, y + 1)
+          switchWeight(x, y, x, y +1)
+          switched += 1
+          break
+        case 6:
+          switchColor(x, y, x, y + 1)
+          switchWeight(x, y, x, y +1)
+          switchColor(x + 1, y, x + 1, y + 1)
+          switchWeight(x + 1, y, x + 1, y +1)
+          switched += 2
+          break
+      }
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+  if (switched == 0) {
+    inactive++
+  } else {
+    inactive = 0
+  }
+  if (inactive >= 2) {
+    toggleRun()
+  }
+
+  return switched
+}
 
 function doStep() {
   if (running) {
@@ -241,7 +411,14 @@ function doStep() {
     running = null    
   }
   readParams()
-  step()
+  let switched = stepMethod()
+  output.innerText="" + switched
+}
+
+function runStep() {
+  let switched = stepMethod()
+  if ((switched % 7 == 0 || switched < 100) && running)
+    output.innerText="" + switched
 }
 
 function toggleRun() {
@@ -253,20 +430,24 @@ function toggleRun() {
   } else {
     console.log("Toggle running ON")
     readParams()
-    running = setInterval(step, 10)
+    offset = 0
+    running = setInterval(runStep, 20)
   }
 }
 
 
 window.onload = function() {
-  let stepbtn = document.getElementById('stepbtn');
-  stepbtn.addEventListener('click', doStep);
-  let runbtn = document.getElementById('runbtn');
-  runbtn.addEventListener('click', toggleRun);
-  output = document.getElementById('output');
+  let stepbtn = document.getElementById('stepbtn')
+  stepbtn.addEventListener('click', doStep)
+  let runbtn = document.getElementById('runbtn')
+  runbtn.addEventListener('click', toggleRun)
+  output = document.getElementById('output')
 }
 
 	</script>
+  <style>
+    input {width: 4em;}
+  </style>
 </head>
 <body>
   <div id="image">
@@ -278,18 +459,49 @@ window.onload = function() {
       <td>Hue</td>
       <td>Sat</td>
       <td>Val</td>
+      <td>Hue start</td>
     </tr>
     <tr>
       <td>X</td>
-      <td><input type="text" value="0" id="xh"></td>
+      <td><input type="text" value="1" id="xh"></td>
       <td><input type="text" value="0" id="xs"></td>
       <td><input type="text" value="0" id="xv"></td>
+      <td>
+        <select id="xhs">
+          <option value="0">Red</option>
+          <option value="5">Yellow</option>
+          <option value="4">Green</option>
+          <option value="3">Cyan</option>
+          <option value="2">Blue</option>
+          <option value="1">Purple</option>
+        </select>
+      </td>
     </tr>
     <tr>
       <td>Y</td>
       <td><input type="text" value="0" id="yh"></td>
-      <td><input type="text" value="1" id="ys"></td>
-      <td><input type="text" value="0" id="yv"></td>
+      <td><input type="text" value="0" id="ys"></td>
+      <td><input type="text" value="-1" id="yv"></td>
+      <td>
+        <select id="yhs">
+          <option value="0">Red</option>
+          <option value="5">Yellow</option>
+          <option value="4">Green</option>
+          <option value="3">Cyan</option>
+          <option value="2">Blue</option>
+          <option value="1">Purple</option>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td colspan=2>Method</td>
+      <td colspan = 3>
+        <select id="method">
+          <option value="0">Switch Y then X</option>
+          <option value="1">Scattered bubble sort</option>
+          <option value="2">Optimise 2x2 square</option>
+        </select>
+      </td>
     </tr>
   </table>
   <div id="buttons">
