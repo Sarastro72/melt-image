@@ -5,8 +5,9 @@
 	<script type="text/javascript">
 let img = new Image()
 img.crossOrigin = "Anonymous"
-const params = new URLSearchParams(window.location.search)
-img.src = params.get("i")
+const urlParams = new URLSearchParams(window.location.search)
+let imgLoc = urlParams.get("i")
+img.src = imgLoc
 img.onload = function() {
   init(this)
 }
@@ -29,17 +30,21 @@ let yparam = [0, 0, 0]
 let stepMethod = switch_y_then_x
 
 function readParams() {
-  xparam = normaliseParams([
+  xparam = [
       parseFloat(document.getElementById("xh").value),
       parseFloat(document.getElementById("xs").value),
       parseFloat(document.getElementById("xv").value),
-      parseFloat(document.getElementById("xhs").value)])
-  yparam = normaliseParams([
+      parseInt(document.getElementById("xhs").value)]
+  yparam = [
       parseFloat(document.getElementById("yh").value),
       parseFloat(document.getElementById("ys").value),
       parseFloat(document.getElementById("yv").value),
-      parseFloat(document.getElementById("yhs").value)])
+      parseInt(document.getElementById("yhs").value)]
+  storeCurrentState()
+  xparam = normaliseParams(xparam)
+  yparam = normaliseParams(yparam)
   calculateWeights()
+
   switch (parseInt(document.getElementById("method").value)) {
     case 0:
     console.log("Using switch_y_then_x")
@@ -435,6 +440,19 @@ function toggleRun() {
   }
 }
 
+function storeCurrentState() {
+  let method = [ parseInt(document.getElementById("method").value) ]
+  let oldurl = window.location.href
+  let url = oldurl.replace(/\?.*/, "")
+  console.log(oldurl)
+  console.log(url)
+  url += "?i=" + imgLoc
+  url += "&p=" + JSON.stringify(xparam.concat(yparam).concat(method))
+  console.log(url)
+  if (oldurl !== url) {
+    window.history.pushState("", "", url);
+  }
+}
 
 window.onload = function() {
   let stepbtn = document.getElementById('stepbtn')
@@ -442,6 +460,23 @@ window.onload = function() {
   let runbtn = document.getElementById('runbtn')
   runbtn.addEventListener('click', toggleRun)
   output = document.getElementById('output')
+  let pv = urlParams.get("p")
+  console.log(`pv ${pv}`)
+  if (pv) {
+    p = JSON.parse(pv)
+    console.log(`p ${p}`)
+    if (p.length >= 9) {
+      document.getElementById("xh").value = p[0]
+      document.getElementById("xs").value = p[1]
+      document.getElementById("xv").value = p[2]
+      document.getElementById("xhs").value = p[3]
+      document.getElementById("yh").value = p[4]
+      document.getElementById("ys").value = p[5]
+      document.getElementById("yv").value = p[6]
+      document.getElementById("yhs").value = p[7]
+      document.getElementById("method").value = p[8]
+    }
+  }
 }
 
 	</script>
@@ -463,9 +498,9 @@ window.onload = function() {
     </tr>
     <tr>
       <td>X</td>
-      <td><input type="text" value="1" id="xh"></td>
-      <td><input type="text" value="0" id="xs"></td>
-      <td><input type="text" value="0" id="xv"></td>
+      <td><input type="text" value="0" id="xh"></td>
+      <td><input type="text" value="10" id="xs"></td>
+      <td><input type="text" value="10" id="xv"></td>
       <td>
         <select id="xhs">
           <option value="0">Red</option>
@@ -479,9 +514,9 @@ window.onload = function() {
     </tr>
     <tr>
       <td>Y</td>
-      <td><input type="text" value="0" id="yh"></td>
+      <td><input type="text" value="-10" id="yh"></td>
       <td><input type="text" value="0" id="ys"></td>
-      <td><input type="text" value="-1" id="yv"></td>
+      <td><input type="text" value="0" id="yv"></td>
       <td>
         <select id="yhs">
           <option value="0">Red</option>
