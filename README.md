@@ -10,3 +10,5 @@ Usage:
 5. Hit the `Run` button.
 
 Hint, You can change the parameters at any time and hit the `run` button again to use the new values.
+
+Try it out: https://sarastro72.github.io/melt-image/index.html?i=sthlm.jpg&p=[0,10,10,0,-10,0,0,0,0]
