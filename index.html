@@ -55,6 +55,10 @@ function readParams() {
       stepMethod = scattered_bubble_sort
       break
     case 2:
+    console.log("Using improve_two_by_two_square")
+      stepMethod = improve_two_by_two_square
+      break
+    case 3:
     console.log("Using optimise_two_by_two_square")
       stepMethod = optimise_two_by_two_square
       break
@@ -80,7 +84,9 @@ function calculateWeights() {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       let color = getColor(x, y)
-      let weight = [xval(color), yval(color)]
+      let xv = xval(color)
+      let yv = yval(color)
+      let weight = [xv, yv]
       weights.push(weight)
     }
   }
@@ -112,6 +118,10 @@ function setColor(x, y, color) {
   data[red + 2] = color[2]
 }
 
+function getWeight(x, y) {
+  return weights[y * width + x]
+}
+
 function getWeightX(x, y) {
   return weights[y * width + x][0]
 }
@@ -126,6 +136,11 @@ function switchWeight(x1, y1, x2, y2) {
   let w = weights[p1]
   weights[p1] = weights[p2]
   weights[p2] = w
+}
+
+function switchA(p1, p2) {
+  switchColor(p1[0], p1[1], p2[0], p2[1])
+  switchWeight(p1[0], p1[1], p2[0], p2[1])
 }
 
 function value(color) {
@@ -264,16 +279,15 @@ function switch_y_then_x() {
 }
 
 
-const primes = [42157, 61403, 85199, 22807, 95483, 5147, 39619]
+const primes = [4217, 5323, 6661] //[42157, 61403, 85199, 22807, 95483, 5147, 39619]
 function scattered_bubble_sort() {
   let n_primes = primes.length
-  let division = 2
+  let division = 1
   let prime = primes[offset % n_primes]
   let seg = offset % division
   //console.log(`offset: ${offset}, prime: ${offset % n_primes}, segment= ${seg}`)
   offset = (offset + 1) % (n_primes * division)
   let switched = 0
-  let inactive = 0
   let cw = width - 1
   let ch = height -1
   let space = cw * ch
@@ -281,10 +295,10 @@ function scattered_bubble_sort() {
   let end = Math.round(space * (seg + 1) / division)
   //console.log(`${start} -> ${end}`)
   p = (start * prime) % space
-
+  let x = p % cw
+  let y = Math.floor(p / cw)
+  
   for (let i = start; i < end; i++) {
-    let x = p % cw
-    let y = Math.floor(p / cw)
     if (getWeightY(x, y) > getWeightY(x, y + 1)) {
       switchColor(x, y, x, y + 1)
       switchWeight(x, y, x, y + 1)
@@ -295,9 +309,13 @@ function scattered_bubble_sort() {
       switchWeight(x, y, x + 1, y)
       switched++
     }
-    p += prime
-    while (p >= space) {
-      p -= space
+    x += prime
+    while (x >= cw) {
+      x -= cw
+      y++
+    }
+    while (y >= ch) {
+      y -= ch
     }
   }
 
@@ -313,10 +331,9 @@ function scattered_bubble_sort() {
   return switched
 }
 
-function optimise_two_by_two_square() {
+function improve_two_by_two_square() {
   offset = (offset + 1) % 2
   let switched = 0
-  let inactive = 0
 
   for (let y = offset; y < height-1; y += 2) {
     for (let x = offset; x < width-1; x += 2) {
@@ -410,6 +427,90 @@ function optimise_two_by_two_square() {
   return switched
 }
 
+const pos = [[0,0], [1,0], [0,1], [1,1]]
+const permutations = [
+  [0,1,2,3], [0,1,3,2], [0,2,1,3], [0,2,3,1], [0,3,1,2], [0,3,2,1],
+  [1,0,2,3], [1,0,3,2], [1,2,0,3], [1,2,3,0], [1,3,0,2], [1,3,2,0],
+  [2,1,0,3], [2,1,3,0], [2,0,1,3], [2,0,3,1], [2,3,1,0], [2,3,0,1],
+  [3,1,2,0], [3,1,0,2], [3,2,1,0], [3,2,0,1], [3,0,1,2], [3,0,2,1]]
+const solutions = [
+  [],[[2,3]],[[1,2]],[[1,2],[1,3]],[[1,3],[1,2]],[[1,3]],[[0,1]],[[0,1],[2,3]],
+  [[0,1],[0,2]],[[0,1],[0,2],[0,3]],[[0,1],[0,3],[0,2]],[[0,1],[0,3]],[[0,2]],
+  [[0,2],[0,3]],[[0,2],[0,1]],[[0,2],[0,3],[0,1]],[[0,2],[0,1],[0,3]],[[0,2],[1,3]],
+  [[0,3]],[[0,3],[0,2]],[[0,3],[1,2]],[[0,3],[0,1],[0,2]],[[0,3],[0,2],[0,1]],[[0,3],[0,1]]]
+
+function optimise_two_by_two_square() {
+  offset = (offset + 1) % 2
+  let switched = 0
+
+  for (let y = offset; y < height-1; y += 2) {
+    for (let x = offset; x < width-1; x += 2) {
+      let max = 0
+      let mp = 0
+      let w = [getWeight(x, y), getWeight(x + 1, y), getWeight(x, y + 1), getWeight(x + 1 , y + 1)] 
+      for (let pi = 1; pi < 24; pi++) {
+        let p = permutations[pi]
+        let v = 0
+        for (i = 0; i < 4; i++) {
+          if (i != p[i]) {
+            v +=  w[p[i]][0] * (pos[i][0] - pos[p[i]][0])
+            v +=  w[p[i]][1] * (pos[i][1] - pos[p[i]][1])
+          } 
+        }
+        if (v > max) {
+          max = v
+          mp = pi
+        }
+      }
+      let apos = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]]
+      let solution = solutions[mp]
+      //console.log(`s=${mp}, swaps=${JSON.stringify(solution)}`)
+      for (var si in solution) {
+        //console.log(`swap=${JSON.stringify(swap)}`)
+        let swap = solution[si]
+        switchA(apos[swap[0]], apos[swap[1]])
+        switched++
+      }
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+  if (switched == 0) {
+    inactive++
+  } else {
+    inactive = 0
+  }
+  if (inactive >= 2) {
+    toggleRun()
+  }
+
+  return switched
+}
+
+/*
+function sw(ar, i, j) {
+  let iv = ar[i]
+  ar[i] = ar[j]
+  ar[j] = iv
+}
+
+function solveit() {
+  let all = []
+  for (let ip = 0; ip < 24; ip++) {
+    let p = permutations[ip]
+    let sol = []
+    for (let i = 0; i < 4; i++) {
+      while(p[i] != i) {
+        sol.push([i, p[i]])
+        sw(p, p[i], i)
+      }
+    }
+    all.push(sol)
+  }
+  console.log(JSON.stringify(all))
+}
+*/
+
 function doStep() {
   if (running) {
     clearInterval(running)
@@ -477,6 +578,7 @@ window.onload = function() {
       document.getElementById("method").value = p[8]
     }
   }
+  //solveit()
 }
 
 	</script>
@@ -534,7 +636,8 @@ window.onload = function() {
         <select id="method">
           <option value="0">Switch Y then X</option>
           <option value="1">Scattered bubble sort</option>
-          <option value="2">Optimise 2x2 square</option>
+          <option value="2">Improve 2x2 square</option>
+          <option value="3">Optimise 2x2 square</option>
         </select>
       </td>
     </tr>
