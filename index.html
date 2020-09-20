@@ -340,37 +340,49 @@ function improve_two_by_two_square() {
       let max = 0
       let c = 0
       
-      let v = getWeightX(x, y) - getWeightX(x + 1, y)
-      if (v > max) {
-        max = v
+      let v1 = getWeightX(x, y) - getWeightX(x + 1, y)
+      let v2 = getWeightX(x, y + 1) - getWeightX(x + 1, y + 1) 
+      if (v1 > max) {
+        max = v1
         c = 1
       }
-      v += getWeightX(x, y + 1) - getWeightX(x + 1, y + 1) 
-      if (v > max) {
-        max = v
+      if (v2 > max) {
+        max = v2
         c = 2
       }
-
-      v = (getWeightX(x, y) - getWeightX(x + 1, y + 1)) + (getWeightY(x, y) - getWeightY(x + 1, y + 1))
-      if (v > max) {
-        max = v
+      if (v1 + v2 > max) {
+        max = v1 + v2
         c = 3
       }
-      v =+ (getWeightX(x, y + 1) - getWeightX(x + 1, y)) + (getWeightY(x + 1, y) - getWeightY(x, y + 1))
-      if (v > max) {
-        max = v
+
+      v1 = (getWeightX(x, y) - getWeightX(x + 1, y + 1)) + (getWeightY(x, y) - getWeightY(x + 1, y + 1))
+      v2 = (getWeightX(x, y + 1) - getWeightX(x + 1, y)) + (getWeightY(x + 1, y) - getWeightY(x, y + 1))
+      if (v1 > max) {
+        max = v1
         c = 4
       }
-
-      v = getWeightY(x, y) - getWeightY(x , y + 1)
-      if (v > max) {
-        max = v
+      if (v2 > max) {
+        max = v2
         c = 5
       }
-      v += getWeightY(x + 1, y) - getWeightY(x + 1, y + 1) 
-      if (v > max) {
-        max = v
+      if (v1 + v2 > max) {
+        max = v1 + v2
         c = 6
+      }
+
+      v1 = getWeightY(x, y) - getWeightY(x , y + 1)
+      v2 = getWeightY(x + 1, y) - getWeightY(x + 1, y + 1) 
+      if (v1 > max) {
+        max = v1
+        c = 7
+      }
+      if (v2 > max) {
+        max = v2
+        c = 8
+      }
+      if (v1 + v2 > max) {
+        max = v1 + v2
+        c = 9
       }
 
       switch(c) {
@@ -380,30 +392,45 @@ function improve_two_by_two_square() {
           switched += 1
           break
         case 2:
+          switchColor(x, y + 1, x + 1, y + 1)
+          switchWeight(x, y + 1, x + 1, y + 1)
+          switched += 1
+          break
+        case 3:
           switchColor(x, y, x + 1, y)
           switchWeight(x, y, x + 1, y)
           switchColor(x, y + 1, x + 1, y + 1)
           switchWeight(x, y + 1, x + 1, y + 1)
           switched += 2
           break
-        case 3:
+        case 4:
           switchColor(x, y, x + 1, y + 1)
           switchWeight(x, y, x + 1, y + 1)
           switched += 1
           break
-        case 4:
+        case 5:
+          switchColor(x + 1, y, x, y + 1)
+          switchWeight(x + 1, y, x, y + 1)
+          switched += 1
+          break
+        case 6:
           switchColor(x, y, x + 1, y + 1)
           switchWeight(x, y, x + 1, y + 1)
           switchColor(x + 1, y, x, y + 1)
           switchWeight(x + 1, y, x, y + 1)
           switched += 2
           break
-        case 5:
+        case 7:
           switchColor(x, y, x, y + 1)
           switchWeight(x, y, x, y +1)
           switched += 1
           break
-        case 6:
+        case 8:
+          switchColor(x + 1, y, x + 1, y + 1)
+          switchWeight(x + 1, y, x + 1, y +1)
+          switched += 1
+          break
+        case 9:
           switchColor(x, y, x, y + 1)
           switchWeight(x, y, x, y +1)
           switchColor(x + 1, y, x + 1, y + 1)
