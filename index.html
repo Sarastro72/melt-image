@@ -279,32 +279,34 @@ function switch_y_then_x() {
 }
 
 
-const primes = [4217, 5323, 6661] //[42157, 61403, 85199, 22807, 95483, 5147, 39619]
+const sbs_primes = [4217, 5323, 6661] //[42157, 61403, 85199, 22807, 95483, 5147, 39619]
+const sbs_n_primes = sbs_primes.length
+const sbs_division = 1
+const sbs_offset_space = (sbs_n_primes * sbs_division)
 function scattered_bubble_sort() {
-  let n_primes = primes.length
-  let division = 1
-  let prime = primes[offset % n_primes]
-  let seg = offset % division
+  let prime = sbs_primes[offset % sbs_n_primes]
+  let seg = offset % sbs_division
   //console.log(`offset: ${offset}, prime: ${offset % n_primes}, segment= ${seg}`)
-  offset = (offset + 1) % (n_primes * division)
+  offset = (offset + 1) % sbs_offset_space
   let switched = 0
   let cw = width - 1
   let ch = height -1
   let space = cw * ch
-  let start = Math.round(space * seg / division)
-  let end = Math.round(space * (seg + 1) / division)
+  let start = Math.round(space * seg / sbs_division)
+  let end = Math.round(space * (seg + 1) / sbs_division)
   //console.log(`${start} -> ${end}`)
   p = (start * prime) % space
   let x = p % cw
   let y = Math.floor(p / cw)
   
   for (let i = start; i < end; i++) {
-    if (getWeightY(x, y) > getWeightY(x, y + 1)) {
+    let ow = getWeightY(x, y)
+    if (ow > getWeightY(x, y + 1)) {
       switchColor(x, y, x, y + 1)
       switchWeight(x, y, x, y + 1)
       switched++
     }
-    if (getWeightX(x, y) > getWeightX(x + 1, y)) {
+    if (ow > getWeightX(x + 1, y)) {
       switchColor(x, y, x + 1, y)
       switchWeight(x, y, x + 1, y)
       switched++
@@ -325,7 +327,7 @@ function scattered_bubble_sort() {
   } else {
     inactive = 0
   }
-  if (inactive >= n_primes * division) {
+  if (inactive >= sbs_n_primes * sbs_division) {
     toggleRun()
   }
   return switched
@@ -662,8 +664,8 @@ window.onload = function() {
       <td colspan = 3>
         <select id="method">
           <option value="0">Switch Y then X</option>
-          <option value="1">Scattered bubble sort</option>
           <option value="2">Improve 2x2 square</option>
+          <option value="1">Scattered bubble sort</option>
           <option value="3">Optimise 2x2 square</option>
         </select>
       </td>
