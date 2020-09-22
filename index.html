@@ -17,6 +17,7 @@ let width = 0
 let height = 0
 let running = false
 let inactive = 0
+let randomWeights = false
 
 let output = null
 let canvas = null
@@ -43,7 +44,7 @@ function readParams() {
   storeCurrentState()
   xparam = normaliseParams(xparam)
   yparam = normaliseParams(yparam)
-  calculateWeights()
+  randomWeights = false
 
   switch (parseInt(document.getElementById("method").value)) {
     case 0:
@@ -62,7 +63,14 @@ function readParams() {
     console.log("Using optimise_two_by_two_square")
       stepMethod = optimise_two_by_two_square
       break
+    case 4:
+      console.log("Using random")
+      stepMethod = switch_y_then_x
+      randomWeights = true
+      break
   }
+
+  calculateWeights()
 }
 
 function normaliseParams(p) {
@@ -83,11 +91,18 @@ function calculateWeights() {
   weights = []
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      let color = getColor(x, y)
-      let xv = xval(color)
-      let yv = yval(color)
-      let weight = [xv, yv]
-      weights.push(weight)
+      if (randomWeights) {
+        let xv = Math.floor(Math.random() * 512) - 256
+        let yv = Math.floor(Math.random() * 512) - 256
+        let weight = [xv, yv]
+        weights.push(weight)        
+      } else {
+        let color = getColor(x, y)
+        let xv = xval(color)
+        let yv = yval(color)
+        let weight = [xv, yv]
+        weights.push(weight)
+      }
     }
   }
 }
@@ -584,11 +599,56 @@ function storeCurrentState() {
   }
 }
 
+function randomiseParameters() {
+  let set = Math.floor(Math.random() * 7) + 1
+  console.log(`x set = ${set}`)
+  let v = 0
+  if ((set & 1) > 0) v = randomParam()
+  document.getElementById("xh").value = v
+  v = 0
+  if ((set & 2) > 0) v = randomParam()
+  document.getElementById("xs").value = v
+  v = 0
+  if ((set & 4) > 0) v = randomParam()
+  document.getElementById("xv").value = v
+  document.getElementById("xhs").value = Math.floor(Math.random() * 6)
+
+  set = Math.floor(Math.random() * 7) + 1
+  console.log(`y set = ${set}`)
+  v = 0
+  if ((set & 1) > 0) v = randomParam()
+  document.getElementById("yh").value = v
+  v = 0
+  if ((set & 2) > 0) v = randomParam()
+  document.getElementById("ys").value = v
+  v = 0
+  if ((set & 4) > 0) v = randomParam()
+  document.getElementById("yv").value = v
+  document.getElementById("yhs").value = Math.floor(Math.random() * 6)
+}
+
+function randomParam() {
+  let v = Math.floor(Math.random() * 20) - 10;
+  if (v >= 0)
+    v++
+  console.log(v)
+  return v
+}
+
+function autoStart() {
+  if (!running) {
+    toggleRun()
+  }
+}
+
+
 window.onload = function() {
   let stepbtn = document.getElementById('stepbtn')
   stepbtn.addEventListener('click', doStep)
   let runbtn = document.getElementById('runbtn')
   runbtn.addEventListener('click', toggleRun)
+  let randbtn = document.getElementById('randbtn')
+  randbtn.addEventListener('click', randomiseParameters)
   output = document.getElementById('output')
   let pv = urlParams.get("p")
   console.log(`pv ${pv}`)
@@ -607,6 +667,13 @@ window.onload = function() {
       document.getElementById("method").value = p[8]
     }
   }
+  let run = urlParams.get("r")
+  if (run) {
+    let wait = parseInt(run)
+    if (isNaN(wait)) wait = 2
+    setTimeout(autoStart, wait * 1000)
+  }
+
   //solveit()
 }
 
@@ -642,6 +709,7 @@ window.onload = function() {
           <option value="1">Purple</option>
         </select>
       </td>
+      <td><input id="randbtn" value="Rand" type="button"></td>
     </tr>
     <tr>
       <td>Y</td>
@@ -667,6 +735,7 @@ window.onload = function() {
           <option value="2">Improve 2x2 square</option>
           <option value="1">Scattered bubble sort</option>
           <option value="3">Optimise 2x2 square</option>
+          <option value="4">Random</option>
         </select>
       </td>
     </tr>
