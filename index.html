@@ -126,6 +126,24 @@ function switchColor(x1, y1, x2, y2) {
   data[red2 + 2] = b   
 }
 
+function switchWeight(x1, y1, x2, y2) {
+  let p1 = y1 * width + x1
+  let p2 = y2 * width + x2
+  let w = weights[p1]
+  weights[p1] = weights[p2]
+  weights[p2] = w
+}
+
+function switchAll(x1, y1, x2, y2) {
+  switchColor(x1, y1, x2, y2)
+  switchWeight(x1, y1, x2, y2)
+}
+
+function switchAllP(p1, p2) {
+  switchColor(p1[0], p1[1], p2[0], p2[1])
+  switchWeight(p1[0], p1[1], p2[0], p2[1])
+}
+
 function setColor(x, y, color) {
   let red = y * (width * 4) + x * 4
   data[red] = color[0]
@@ -143,19 +161,6 @@ function getWeightX(x, y) {
 
 function getWeightY(x, y) {
   return weights[y * width + x][1]
-}
-
-function switchWeight(x1, y1, x2, y2) {
-  let p1 = y1 * width + x1
-  let p2 = y2 * width + x2
-  let w = weights[p1]
-  weights[p1] = weights[p2]
-  weights[p2] = w
-}
-
-function switchA(p1, p2) {
-  switchColor(p1[0], p1[1], p2[0], p2[1])
-  switchWeight(p1[0], p1[1], p2[0], p2[1])
 }
 
 function value(color) {
@@ -265,8 +270,7 @@ function switch_y_then_x() {
   for (let y = offset; y < height-1; y += 2) {
     for (let x = 0; x < width; x += 1) {
       if (getWeightY(x, y) > getWeightY(x, y + 1)) {
-        switchColor(x, y, x, y + 1)
-        switchWeight(x, y, x, y + 1)
+        switchAll(x, y, x, y + 1)
         switched++
       }
     }
@@ -274,8 +278,7 @@ function switch_y_then_x() {
   for (let y = 0; y < height; y += 1) {
     for (let x = offset; x < width-1; x += 2) {
       if (getWeightX(x, y) > getWeightX(x + 1, y)) {
-        switchColor(x, y, x + 1, y)
-        switchWeight(x, y, x + 1, y)
+        switchAll(x, y, x + 1, y)
         switched++
       }
     }
@@ -293,13 +296,12 @@ function switch_y_then_x() {
   return switched
 }
 
-
-const sbs_primes = [4217, 5323, 6661] //[42157, 61403, 85199, 22807, 95483, 5147, 39619]
+const sbs_primes =   [42157, 61403, 85199, 22807, 95483, 5147, 39619] // [4217, 5323, 6661]
 const sbs_n_primes = sbs_primes.length
-const sbs_division = 1
-const sbs_offset_space = (sbs_n_primes * sbs_division)
+const sbs_division = 2
+const sbs_offset_space = sbs_n_primes * sbs_division
 function scattered_bubble_sort() {
-  let prime = sbs_primes[offset % sbs_n_primes]
+  let prime = sbs_primes[Math.floor(offset / sbs_division)]
   let seg = offset % sbs_division
   //console.log(`offset: ${offset}, prime: ${offset % n_primes}, segment= ${seg}`)
   offset = (offset + 1) % sbs_offset_space
@@ -315,15 +317,12 @@ function scattered_bubble_sort() {
   let y = Math.floor(p / cw)
   
   for (let i = start; i < end; i++) {
-    let ow = getWeightY(x, y)
-    if (ow > getWeightY(x, y + 1)) {
-      switchColor(x, y, x, y + 1)
-      switchWeight(x, y, x, y + 1)
+    if (getWeightY(x, y) > getWeightY(x, y + 1)) {
+      switchAll(x, y, x, y + 1)
       switched++
     }
-    if (ow > getWeightX(x + 1, y)) {
-      switchColor(x, y, x + 1, y)
-      switchWeight(x, y, x + 1, y)
+    if (getWeightX(x, y) > getWeightX(x + 1, y)) {
+      switchAll(x, y, x + 1, y)
       switched++
     }
     x += prime
@@ -404,54 +403,42 @@ function improve_two_by_two_square() {
 
       switch(c) {
         case 1: 
-          switchColor(x, y, x + 1, y)
-          switchWeight(x, y, x + 1, y)
+          switchAll(x, y, x + 1, y)
           switched += 1
           break
         case 2:
-          switchColor(x, y + 1, x + 1, y + 1)
-          switchWeight(x, y + 1, x + 1, y + 1)
+          switchAll(x, y + 1, x + 1, y + 1)
           switched += 1
           break
         case 3:
-          switchColor(x, y, x + 1, y)
-          switchWeight(x, y, x + 1, y)
-          switchColor(x, y + 1, x + 1, y + 1)
-          switchWeight(x, y + 1, x + 1, y + 1)
+          switchAll(x, y, x + 1, y)
+          switchAll(x, y + 1, x + 1, y + 1)
           switched += 2
           break
         case 4:
-          switchColor(x, y, x + 1, y + 1)
-          switchWeight(x, y, x + 1, y + 1)
+          switchAll(x, y, x + 1, y + 1)
           switched += 1
           break
         case 5:
-          switchColor(x + 1, y, x, y + 1)
-          switchWeight(x + 1, y, x, y + 1)
+          switchAll(x + 1, y, x, y + 1)
           switched += 1
           break
         case 6:
-          switchColor(x, y, x + 1, y + 1)
-          switchWeight(x, y, x + 1, y + 1)
-          switchColor(x + 1, y, x, y + 1)
-          switchWeight(x + 1, y, x, y + 1)
+          switchAll(x, y, x + 1, y + 1)
+          switchAll(x + 1, y, x, y + 1)
           switched += 2
           break
         case 7:
-          switchColor(x, y, x, y + 1)
-          switchWeight(x, y, x, y +1)
+          switchAll(x, y, x, y + 1)
           switched += 1
           break
         case 8:
-          switchColor(x + 1, y, x + 1, y + 1)
-          switchWeight(x + 1, y, x + 1, y +1)
+          switchAll(x + 1, y, x + 1, y + 1)
           switched += 1
           break
         case 9:
-          switchColor(x, y, x, y + 1)
-          switchWeight(x, y, x, y +1)
-          switchColor(x + 1, y, x + 1, y + 1)
-          switchWeight(x + 1, y, x + 1, y +1)
+          switchAll(x, y, x, y + 1)
+          switchAll(x + 1, y, x + 1, y + 1)
           switched += 2
           break
       }
@@ -512,7 +499,7 @@ function optimise_two_by_two_square() {
       for (var si in solution) {
         //console.log(`swap=${JSON.stringify(swap)}`)
         let swap = solution[si]
-        switchA(apos[swap[0]], apos[swap[1]])
+        switchAllP(apos[swap[0]], apos[swap[1]])
         switched++
       }
     }
